@@ -22,6 +22,20 @@ class Matrix:
         self.dimensions = (n, m)
         self.vals = [*rows]
         self.isSquare = (self.dimensions[0] == self.dimensions[1])
+    
+    def __getitem__(self, idx):
+        if isinstance(idx, tuple):
+            if len(idx) != 2: raise ValueError(f"Expected 2 positional arguments, got {len(idx)}")
+            return self.vals[idx[0]][idx[1]]
+        return self.vals[idx]
+    
+    def __setitem__(self, idx, val):
+        if isinstance(idx, tuple):
+            if len(idx) != 2: raise ValueError(f"Expected 2 positional arguments, got {len(idx)}")
+            self.vals[idx[0]][idx[1]] = val
+        elif isinstance(val, list):
+            if len(val) != self.dimensions[1]: raise ValueError(f"Matrix row length mismatch, expected {self.dimensions[1]}, got {len(val)}")
+            self.vals[idx] = val
 
     
     def __str__(self) :
@@ -34,6 +48,10 @@ class Matrix:
                 if j != self.dimensions[1] - 1 : matrix_representation += ", "
             matrix_representation += "]"
         return matrix_representation
+    
+    def __iter__(self):
+        for row in self.vals:
+            yield row
     
     def __add__(self, other) :
         if not isinstance(other, Matrix): raise TypeError(f"Cannot add matrix with {type(other)}")
@@ -82,10 +100,21 @@ class Matrix:
         return Matrix(*[self.vals[i][:col-1]+self.vals[i][col:] for i in range(self.dimensions[0]) if i!=(row-1)])
 
     def transpose(self):
-        return Matrix(*[[self.vals[i][j] for j in range(self.dimensions[1])] for i in range(self.dimensions[0])])
+        return Matrix(*[[self.vals[i][j] for i in range(self.dimensions[0])] for j in range(self.dimensions[1])])
+    
+    def swap_rows(self, row1, row2):
+        temp = self.vals[row1-1]
+        self.vals[row1-1] = self.vals[row2-1]
+        self.vals[row2-1] = temp
+
+    def swap_columns(self, column1, column2):
+        temp = [self.vals[i][column1 - 1] for i in range(self.dimensions[0])]
+        for i in range(self.dimensions[0]):
+            self.vals[i][column1 - 1] = self.vals[i][column2 - 1]
+            self.vals[i][column2 - 1] = temp[i]
     
     def inverse(self) :
-        return self
+        return NotImplementedError
 
 def zeroes(n : int, m : int) -> Matrix :
     return Matrix(*[[0 for _ in range(m)] for _ in range(n)])
@@ -96,7 +125,8 @@ def identity(n : int) -> Matrix :
 def multiply(A : Matrix, B : Matrix) -> Matrix :
     n = A.dimensions[0]
     m = B.dimensions[1]
-    if A.dimensions[1] != B.dimensions[0]: raise TypeError(f"Cannot multiply matrices with dimensions {n}x{A.dimensions[1]} & {B.dimensions[0]}x{m}  (Use * for element-wise multiplication")
+    if A.dimensions[1] != B.dimensions[0]:
+        raise TypeError(f"Cannot multiply matrices with dimensions {n}x{A.dimensions[1]} & {B.dimensions[0]}x{m}  (Use * for element-wise multiplication")
     o = A.dimensions[1]
 
     C = zeroes(n, m)
@@ -106,9 +136,9 @@ def multiply(A : Matrix, B : Matrix) -> Matrix :
                 C.vals[i][j] += A.vals[i][k] * B.vals[k][j]
     return C
 
-def LU_decompose(matrix : Matrix) -> tuple[Matrix, Matrix] :
+def LU_decompose(matrix : Matrix) -> tuple[Matrix, Matrix, Matrix] :
     if(matrix.dimensions[0] != matrix.dimensions[1]): raise TypeError("Cannot decompose non-square matrices into LU form")
-    dimension = matrix.dimensions[0]
+    size = matrix.dimensions[0]
     
     # Find L & U such that A = L@U, and L has all diagonal elements = 1
 
@@ -118,12 +148,28 @@ def LU_decompose(matrix : Matrix) -> tuple[Matrix, Matrix] :
         # Find the corresponding row of U by multiplying with element of L and subtracting from A
         # Uk,j = Ak,j - sum(0, k-1)Lk,s Us,j, j>=k
         # Li,k = (Ai,k - sum(0, k-1)Li,s Us,k)/Uk,k, i>K
+    
+    # P is the permutation matrix to keep track of row swaps when pivoting
+    P = identity(size)
+    L = identity(size)
+    U = Matrix(*[row[:] for row in matrix.vals])
 
-    L = identity(dimension)
-    U = matrix.copy()
+    for i in range(size):
+        pivot = max(range(i,size), key = lambda r: U[r][i])
+        if U[pivot][i] == 0: raise ValueError("The matrix is singular and thus cannot be decomposed")
 
-    for col in range(dimension):
-        for row in range(dimension):
-            U[row][col] = 0
-
-    return matrix, matrix
+        # swap rows to put pivot on the top row
+        U[i], U[pivot] = U[pivot], U[i]
+        P[i], P[pivot] = P[pivot], P[i]
+        if i>0:
+            L[i][:i], L[pivot][:i] = L[pivot][:i], L[i][:i]
+        
+        # Eliminate terms from U
+        for j in range(i+1, size):
+            factor = U[j][i]/U[i][i]
+            L[j][i] = factor
+            
+            for k in range(i, size):
+                U[j][k] -= factor*U[i][k]
+        
+    return P, L, U

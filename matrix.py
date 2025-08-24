@@ -22,6 +22,7 @@ class Matrix:
         self.dimensions = (n, m)
         self.vals = [*rows]
         self.isSquare = (self.dimensions[0] == self.dimensions[1])
+        print("values on init:", self.vals)
     
     def __getitem__(self, idx):
         if isinstance(idx, tuple):
@@ -36,7 +37,6 @@ class Matrix:
         elif isinstance(val, list):
             if len(val) != self.dimensions[1]: raise ValueError(f"Matrix row length mismatch, expected {self.dimensions[1]}, got {len(val)}")
             self.vals[idx] = val
-
     
     def __str__(self) :
         dimension_message = f"{self.dimensions[0]} x {self.dimensions[1]} matrix"
@@ -52,6 +52,9 @@ class Matrix:
     def __iter__(self):
         for row in self.vals:
             yield row
+    
+    def __eq__(self, other) :
+        return type(other) == Matrix and self.dimensions == other.dimensions and all([all([self.vals[i][j] == other.vals[i][j] for j in range(self.dimensions[1])] for i in range(self.dimensions[0]))])
     
     def __add__(self, other) :
         if not isinstance(other, Matrix): raise TypeError(f"Cannot add matrix with {type(other)}")
@@ -84,6 +87,18 @@ class Matrix:
         if not isinstance(other, Matrix) : raise TypeError(f"Cannot do matrix multiplication with {type(other)}")
         return multiply(self, other)
 
+    @property
+    def isUpper(self):
+        return self.isSquare and all([all([self.vals[i][j] == 0 for j in range(0, i)]) for  i in range(1, self.dimensions[0])])
+
+    @property
+    def isLower(self):
+        return self.isSquare and all([all([self.vals[i][j] == 0 for j in range(i+1, self.dimensions[1])]) for i in range(0, self.dimensions[0]-1)])
+    
+    @property
+    def isDiagonal(self):
+        return self.isUpper and self.isLower
+
     def fill(self, val):
         for i in range(self.dimensions[0]):
             for j in range(self.dimensions[1]):
@@ -106,12 +121,14 @@ class Matrix:
         temp = self.vals[row1-1]
         self.vals[row1-1] = self.vals[row2-1]
         self.vals[row2-1] = temp
+        self.__init__()
 
     def swap_columns(self, column1, column2):
         temp = [self.vals[i][column1 - 1] for i in range(self.dimensions[0])]
         for i in range(self.dimensions[0]):
             self.vals[i][column1 - 1] = self.vals[i][column2 - 1]
             self.vals[i][column2 - 1] = temp[i]
+        self.__init__()
     
     def inverse(self) :
         return NotImplementedError

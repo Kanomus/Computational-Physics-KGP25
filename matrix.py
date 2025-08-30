@@ -22,7 +22,6 @@ class Matrix:
         self.dimensions = (n, m)
         self.vals = [*rows]
         self.isSquare = (self.dimensions[0] == self.dimensions[1])
-        print("values on init:", self.vals)
     
     def __getitem__(self, idx):
         if isinstance(idx, tuple):
@@ -129,9 +128,6 @@ class Matrix:
             self.vals[i][column1 - 1] = self.vals[i][column2 - 1]
             self.vals[i][column2 - 1] = temp[i]
         self.__init__()
-    
-    def inverse(self) :
-        return NotImplementedError
 
 def zeroes(n : int, m : int) -> Matrix :
     return Matrix(*[[0 for _ in range(m)] for _ in range(n)])

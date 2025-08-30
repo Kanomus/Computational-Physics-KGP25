@@ -85,7 +85,7 @@ class Matrix:
     def __matmul__(self, other) :
         if not isinstance(other, Matrix) : raise TypeError(f"Cannot do matrix multiplication with {type(other)}")
         return multiply(self, other)
-
+    
     @property
     def isUpper(self):
         return self.isSquare and all([all([self.vals[i][j] == 0 for j in range(0, i)]) for  i in range(1, self.dimensions[0])])
@@ -97,6 +97,9 @@ class Matrix:
     @property
     def isDiagonal(self):
         return self.isUpper and self.isLower
+
+    def copy(self):
+        return Matrix([row[:] for row in self.vals])
 
     def fill(self, val):
         for i in range(self.dimensions[0]):

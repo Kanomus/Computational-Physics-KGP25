@@ -11,22 +11,24 @@ def integ(eqn : callable, bounds : tuple[float, float], method : str = "simp3", 
         while x < bounds[1]:
             out_vals.append(out)
             idx += 1
-            out, x += base_method(eqn, x, step)
+            out += base_method(eqn, x, step)
+            x += step
         out_vals.append(out)
         return out_vals
     
     else:    
         while x < bounds[1]:
-            out, x += base_method(eqn, x, step)
+            out += base_method(eqn, x, step)
+            x += step
         return out
 
 # Methods for integration
 
 def rect(eqn : callable, x : float, step : float):
-    return eqn(x)*step, step
+    return eqn(x)*step
 
 def trapez(eqn : callable, x : float, step : float):
-    return (eqn(x)+eqn(x+step))*step/2, step
+    return (eqn(x)+eqn(x+step))*step/2
 
 def simp3(eqn : callable, x : float, step : float):
-    return step*(eqn(x) + 4*eqn(x+step) + eqn(x + (2*step)))/3
+    return step*(eqn(x) + 4*eqn(x+(step/2)) + eqn(x + (step)))/6

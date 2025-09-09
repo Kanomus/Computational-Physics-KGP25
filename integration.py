@@ -1,5 +1,5 @@
 # General integrator for finite bounds 
-def integ(eqn : callable, bounds : tuple[float, float], method : str = "simp3", step : float = 0.001, return_list : bool = False):
+def integ(eqn : callable, bounds : tuple[float, float], method : str = "simp38", step : float = 0.001, return_list : bool = False):
     base_method = globals()[method.lower()]
 
     out = 0
@@ -30,5 +30,8 @@ def rect(eqn : callable, x : float, step : float):
 def trapez(eqn : callable, x : float, step : float):
     return (eqn(x)+eqn(x+step))*step/2
 
-def simp3(eqn : callable, x : float, step : float):
+def simp13(eqn : callable, x : float, step : float):
     return step*(eqn(x) + 4*eqn(x+(step/2)) + eqn(x + (step)))/6
+
+def simp38(eqn : callable, x : float, step : float):
+    return 3*step*(eqn(x) + 3*eqn(x+(step/3)) + 3*eqn(x+(2*step/3)) + eqn(x + (step)))/8

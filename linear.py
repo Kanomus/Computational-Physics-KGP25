@@ -1,7 +1,7 @@
 # Script to solve system of linear equations
 
 import matrix
-from matrix import Matrix as Matrix
+from matrix import Matrix
 
 def solve_system(A : Matrix, B : Matrix) -> Matrix :
     n, m = A.dimensions
